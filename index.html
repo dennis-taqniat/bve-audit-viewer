@@ -45,7 +45,7 @@ input,select{font-size:16px}
 .gate label{display:grid;gap:6px;font-weight:500}
 .err{min-height:24px;color:var(--bad)}
 
-main{max-width:760px;margin:0 auto;padding:32px 20px 64px}
+main{max-width:1120px;margin:0 auto;padding:40px 32px 64px}
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--line)}
 header h1{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.01em;text-wrap:balance}
 .sub{margin:2px 0 0;color:var(--mut);font-size:14px;line-height:20px}
@@ -56,7 +56,7 @@ header h1{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacin
 .count{color:var(--mut);padding:4px 0 8px;min-height:32px}
 .day{margin:32px 0 4px;font-size:13px;line-height:20px;font-weight:600;color:var(--mut)}
 ol{list-style:none;margin:0;padding:0}
-li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;border-top:1px solid var(--line)}
+li.e{display:grid;grid-template-columns:112px 1fr;gap:0 24px;padding:14px 0;border-top:1px solid var(--line)}
 .time{white-space:nowrap;color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px;padding-top:1px}
 .head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between}
 .head b{font-weight:600}
@@ -70,6 +70,7 @@ li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;borde
 .meta{margin-top:6px;color:var(--mut);font-size:13px;line-height:20px;overflow-wrap:anywhere}
 .empty{padding:48px 0;color:var(--mut)}
 .empty b{display:block;color:var(--fg);margin-bottom:4px}
+@media (max-width:860px){main{padding:32px 20px 56px}}
 @media (max-width:560px){main{padding:20px 16px 48px}li.e{grid-template-columns:1fr;gap:2px}.diffs{grid-template-columns:1fr;gap:0}.diffs .el{margin-top:8px}.sel{flex:1 1 100%}.sel select{width:100%}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
