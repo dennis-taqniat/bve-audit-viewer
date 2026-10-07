@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ZAYyShThhCDn2G+gGpWOomU6eDNJzJ5zH4JZCQnJ99s='; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<title>BVE audit trail</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#0f172a;--mut:#64748b;--line:#e2e8f0;--acc:#2563eb;--bad:#b91c1c;--ok:#15803d}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--acc:#60a5fa;--bad:#f87171;--ok:#4ade80}}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 system-ui,sans-serif}
+header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+h1{font-size:15px;margin:0;flex:1 1 auto}
+select,input,button{font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+button{cursor:pointer}
+main{padding:0 20px 24px}
+.note{color:var(--mut);padding:10px 0}
+.drop{border:1px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--mut);margin:16px 0}
+.drop.over{border-color:var(--acc);color:var(--fg)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:600;position:sticky;top:0;background:var(--bg)}
+td.mono,.mono{font:12px/1.5 ui-monospace,Menlo,monospace;overflow-wrap:anywhere}
+.ok{color:var(--ok)}.refused{color:var(--bad)}
+@media (max-width:640px){th:nth-child(n+5),td:nth-child(n+5){display:none}}
+</style></head><body>
+<header><h1 id="title">Audit trail</h1>
+<label>Event <select id="ev"><option value="">all</option><option>connect</option><option>diff</option><option>apply</option><option>discard</option><option>undo</option><option>redo</option></select></label>
+<label>Outcome <select id="oc"><option value="">all</option><option>ok</option><option>refused</option></select></label>
+<input id="q" type="search" placeholder="Search element, property, file, session" aria-label="Search">
+<button id="pick" type="button">Open audit.jsonl</button><input id="file" type="file" accept=".jsonl,.json,.txt,application/json" hidden>
+</header>
+<main>
+<div class="drop" id="drop">Drop <span class="mono">.bve/audit.jsonl</span> here, or use Open audit.jsonl. The file is read in this browser and is never uploaded.</div>
+<div class="note" id="note" role="status"></div>
+<table><thead><tr><th>Time</th><th>Outcome</th><th>Event</th><th>Element and changes</th><th>Files</th><th>Session</th></tr></thead><tbody id="rows"></tbody></table></main>
+<script>
+const $=id=>document.getElementById(id);
+let data={records:[],skipped:0,truncated:false,project:''};
+function cell(tr,text,cls){const td=document.createElement('td');td.textContent=text;if(cls)td.className=cls;tr.appendChild(td);}
+function render(){
+  const ev=$('ev').value,oc=$('oc').value,q=$('q').value.toLowerCase();
+  const rows=data.records.filter(r=>(!ev||r.event===ev)&&(!oc||r.outcome===oc)&&(!q||JSON.stringify([r.edits,r.files,r.origin,r.session,r.code]).toLowerCase().includes(q)));
+  const body=$('rows');body.replaceChildren();
+  for(const r of rows){const tr=document.createElement('tr');
+    cell(tr,new Date(r.at).toLocaleString());
+    cell(tr,r.outcome+(r.code?' ('+r.code+')':''),r.outcome);
+    cell(tr,r.event);
+    const el=document.createElement('td');el.className='mono';
+    for(const e of r.edits||[]){const b=document.createElement('div');b.textContent=e.element;b.style.fontWeight='600';el.appendChild(b);
+      for(const c of e.changes){const l=document.createElement('div');l.textContent=c.prop+': '+(c.from||'unset')+' → '+c.to;l.style.color='var(--mut)';el.appendChild(l);}}
+    tr.appendChild(el);
+    cell(tr,(r.files||[]).join('\n'),'mono');
+    cell(tr,r.session||'','mono');tr.lastChild.title=r.origin||'';body.appendChild(tr);}
+  $('title').textContent='Audit trail'+(data.project?' · '+data.project:'');
+  $('note').textContent=rows.length+' of '+data.records.length+' records'+(data.truncated?' (older records not loaded)':'')+(data.skipped?' · '+data.skipped+' unreadable lines skipped':'');
+}
+for(const id of['ev','oc','q'])$(id).addEventListener('input',render);
+
+const MAX=5000;
+function parse(text){
+  const records=[];let skipped=0;
+  for(const line of text.split('\n')){if(!line.trim())continue;
+    try{const r=JSON.parse(line);if(r&&typeof r.at==='string'&&typeof r.event==='string'&&typeof r.outcome==='string')records.push(r);else skipped++;}catch{skipped++;}}
+  records.reverse();
+  return{records:records.slice(0,MAX),skipped,truncated:records.length>MAX,project:records.length?records[0].project||'':''};
+}
+async function open(f){if(!f)return;data=parse(await f.text());render();}
+$('pick').addEventListener('click',()=>$('file').click());
+$('file').addEventListener('change',e=>open(e.target.files[0]));
+const drop=$('drop');
+addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+addEventListener('dragleave',()=>drop.classList.remove('over'));
+addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');open(e.dataTransfer.files[0]);});
+render();
+</script></body></html>
