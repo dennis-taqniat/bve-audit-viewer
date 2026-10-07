@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ZAYyShThhCDn2G+gGpWOomU6eDNJzJ5zH4JZCQnJ99s='; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-xqhd+Y1GrsgTrx9JpnmNu6h4k9lRjdhdVtj5ivrHN4E='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :root{color-scheme:light dark;--bg:#fff;--fg:#0f172a;--mut:#64748b;--line:#e2e8f0;--acc:#2563eb;--bad:#b91c1c;--ok:#15803d}
@@ -12,8 +12,8 @@ select,input,button{font:inherit;color:inherit;background:transparent;border:1px
 button{cursor:pointer}
 main{padding:0 20px 24px}
 .note{color:var(--mut);padding:10px 0}
-.drop{border:1px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--mut);margin:16px 0}
-.drop.over{border-color:var(--acc);color:var(--fg)}
+.lock{display:flex;gap:8px;align-items:center;padding:20px 0}
+.lock[hidden]{display:none}
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--mut);font-weight:600;position:sticky;top:0;background:var(--bg)}
@@ -25,10 +25,9 @@ td.mono,.mono{font:12px/1.5 ui-monospace,Menlo,monospace;overflow-wrap:anywhere}
 <label>Event <select id="ev"><option value="">all</option><option>connect</option><option>diff</option><option>apply</option><option>discard</option><option>undo</option><option>redo</option></select></label>
 <label>Outcome <select id="oc"><option value="">all</option><option>ok</option><option>refused</option></select></label>
 <input id="q" type="search" placeholder="Search element, property, file, session" aria-label="Search">
-<button id="pick" type="button">Open audit.jsonl</button><input id="file" type="file" accept=".jsonl,.json,.txt,application/json" hidden>
 </header>
 <main>
-<div class="drop" id="drop">Drop <span class="mono">.bve/audit.jsonl</span> here, or use Open audit.jsonl. The file is read in this browser and is never uploaded.</div>
+<form class="lock" id="lock"><label>Password <input id="pw" type="password" autocomplete="current-password" required minlength="1" autofocus></label> <button type="submit">Unlock</button></form>
 <div class="note" id="note" role="status"></div>
 <table><thead><tr><th>Time</th><th>Outcome</th><th>Event</th><th>Element and changes</th><th>Files</th><th>Session</th></tr></thead><tbody id="rows"></tbody></table></main>
 <script>
@@ -54,6 +53,15 @@ function render(){
 }
 for(const id of['ev','oc','q'])$(id).addEventListener('input',render);
 
+async function decryptAudit(blob,password){
+  const b=JSON.parse(blob);
+  if(b.v!==1||b.kdf!=='PBKDF2-SHA256'||!(b.iter>=100000&&b.iter<=2000000))throw new Error('unsupported file');
+  const u=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:u(b.salt),iterations:b.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:u(b.iv)},key,u(b.ct)));
+}
+
 const MAX=5000;
 function parse(text){
   const records=[];let skipped=0;
@@ -62,12 +70,27 @@ function parse(text){
   records.reverse();
   return{records:records.slice(0,MAX),skipped,truncated:records.length>MAX,project:records.length?records[0].project||'':''};
 }
-async function open(f){if(!f)return;data=parse(await f.text());render();}
-$('pick').addEventListener('click',()=>$('file').click());
-$('file').addEventListener('change',e=>open(e.target.files[0]));
-const drop=$('drop');
-addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
-addEventListener('dragleave',()=>drop.classList.remove('over'));
-addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');open(e.dataTransfer.files[0]);});
+let password='',last='';
+async function fetchBlob(){
+  const r=await fetch('audit.enc',{cache:'no-store'});
+  if(r.status===404)return null;
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.text();
+}
+async function refresh(first){
+  let blob;
+  try{blob=await fetchBlob();}catch(e){$('note').textContent='Could not load the log: '+e.message;return false;}
+  if(blob===null){$('note').textContent='No audit log has been published yet.';return false;}
+  if(blob===last)return true;
+  try{data=parse(await decryptAudit(blob,password));last=blob;}
+  catch{if(first)$('note').textContent='Wrong password, or the file is damaged.';else $('note').textContent='The log changed and no longer opens with this password. Reload and unlock again.';return false;}
+  $('lock').hidden=true;render();return true;
+}
+$('lock').addEventListener('submit',async e=>{
+  e.preventDefault();
+  password=$('pw').value;$('note').textContent='Unlocking…';
+  const ok=await refresh(true);
+  if(ok){$('pw').value='';setInterval(()=>refresh(false),30000);}else password='';
+});
 render();
 </script></body></html>

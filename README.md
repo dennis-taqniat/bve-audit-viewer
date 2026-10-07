@@ -1,5 +1,5 @@
 # BVE audit viewer
 
-Static page for reading a Browser Visual Editor `.bve/audit.jsonl`. It contains no data and makes no network requests: open the file from your machine and it is read in your browser, never uploaded.
+Hosted page for the Browser Visual Editor audit trail. It contains no log data. It fetches `audit.enc` (encrypted) from this site and decrypts it in your browser with the password you type; the password never leaves your machine.
 
-Generated from the BVE repository (`scripts/build-audit-page.mjs`). Do not commit audit logs here.
+Generated from the BVE repository (`scripts/build-audit-page.mjs`). `audit.enc` is written by `scripts/audit-publish.mjs`.
