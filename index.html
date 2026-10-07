@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Ik67X3a5lJUqAYDsRBCZlQ1s4VIkwoQUGl9XGFOZnss='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fnWiiN1Oy59ScJoexCZ1lr9Vg8hS5XdqqVcJk45rHY4='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :root{color-scheme:light dark;
   --bg:#fafafa;--surface:#fff;--sunken:#f4f4f5;--line:#e4e4e7;--line-strong:#d4d4d8;
-  --fg:#18181b;--mut:#71717a;--acc:#2563eb;--acc-fg:#fff;--acc-soft:#dbeafe;--acc-text:#1d4ed8;
+  --fg:#18181b;--mut:#52525b;--acc:#2563eb;--acc-fg:#fff;--acc-soft:#dbeafe;--acc-text:#1d4ed8;
   --ok:#15803d;--ok-soft:#dcfce7;--bad:#b91c1c;--bad-soft:#fee2e2;--warn:#b45309;
   --add:#166534;--add-bg:#dcfce7;--del:#991b1b;--del-bg:#fee2e2;
   --r-md:6px;--r-lg:8px;--r-xl:12px;--focus:0 0 0 2px var(--bg),0 0 0 4px var(--acc);
@@ -21,6 +21,9 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:400 14px/20px var(--sans);-webkit-font-smoothing:antialiased}
 [hidden]{display:none!important}
 button,input,select{font:inherit;color:inherit}
+input{font-size:16px}
+.skip{position:absolute;left:12px;top:-48px;z-index:20;padding:8px 12px;background:var(--acc);color:var(--acc-fg);border-radius:var(--r-md);text-decoration:none;font-weight:500}
+.skip:focus{top:8px}
 :focus-visible{outline:none;box-shadow:var(--focus);border-radius:var(--r-md)}
 .mono{font-family:var(--mono);font-size:12px;line-height:16px}
 .mut{color:var(--mut)}
@@ -58,31 +61,32 @@ button,input,select{font:inherit;color:inherit}
 .stat.bad b{color:var(--bad)}
 .filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:16px 0 12px}
 .seg{display:inline-flex;max-width:100%;overflow-x:auto;border:1px solid var(--line-strong);border-radius:var(--r-md);overflow:hidden;background:var(--surface)}
-.seg button{min-height:32px;padding:0 10px;background:none;border:0;border-right:1px solid var(--line);cursor:pointer;color:var(--mut);font-weight:500}
+.seg button{min-height:40px;padding:0 12px;background:none;border:0;border-right:1px solid var(--line);cursor:pointer;color:var(--mut);font-weight:500}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed=true]{background:var(--acc-soft);color:var(--acc-text)}
 .seg button:hover:not([aria-pressed=true]){background:var(--sunken);color:var(--fg)}
 .seg button:focus-visible{border-radius:0}
 .search{position:relative;flex:1 1 220px;min-width:180px}
-.search .field{min-height:36px;padding-left:32px}
-.search svg{position:absolute;left:10px;top:10px;color:var(--mut);pointer-events:none}
+.search .field{min-height:44px;padding-left:36px}
+.search svg{position:absolute;left:12px;top:14px;color:var(--mut);pointer-events:none}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
 thead th{text-align:left;font-size:12px;font-weight:600;color:var(--mut);padding:8px 12px;background:var(--sunken);border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 tr.day td{padding:6px 12px;background:var(--sunken);font-size:12px;font-weight:600;color:var(--mut);text-transform:none}
-tr.row{cursor:pointer}
+tr.row{cursor:pointer;scroll-margin-top:72px}
+.row-btn{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:none;border:0;padding:0;text-align:left;cursor:pointer;min-height:24px}
+.row-btn:focus-visible{box-shadow:var(--focus)}
 tr.row:hover td{background:color-mix(in srgb,var(--sunken) 60%,transparent)}
-tr.row[aria-expanded=true] td{background:var(--sunken)}
+tr.row[data-open=true] td{background:var(--sunken)}
 tr.row.refused td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
 .time{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--mut)}
-.what{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
 .dot.refused{background:var(--bad)}
 .dot.info{background:var(--line-strong)}
-.badge{display:inline-flex;align-items:center;padding:0 6px;border-radius:var(--r-md);font-size:11px;line-height:18px;font-weight:600;background:var(--bad-soft);color:var(--bad)}
+.badge{display:inline-flex;align-items:center;padding:0 6px;border-radius:var(--r-md);font-size:12px;line-height:18px;font-weight:600;background:var(--bad-soft);color:var(--bad)}
 .chev{display:inline-block;transition:transform .15s;color:var(--mut)}
-tr.row[aria-expanded=true] .chev{transform:rotate(90deg)}
+tr.row[data-open=true] .chev{transform:rotate(90deg)}
 .el{font-weight:600}
 .more{color:var(--mut)}
 .chips{display:flex;flex-wrap:wrap;gap:4px}
@@ -100,17 +104,18 @@ tr.row[aria-expanded=true] .chev{transform:rotate(90deg)}
 .empty b{display:block;color:var(--fg);font-size:16px;line-height:24px;margin-bottom:4px}
 .foot{padding:12px 0 32px;color:var(--mut);font-size:12px}
 @media (max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}thead th.hide,td.hide{display:none}.detail-in{padding-left:12px}}
-@media (max-width:560px){.wrap{padding:0 12px}thead{display:none}td.time{padding-bottom:0}}
+@media (max-width:560px){.seg button{min-height:44px}.btn{min-height:44px}.btn.sm{min-height:36px}.wrap{padding:0 12px}thead{display:none}td.time{padding-bottom:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <div class="gate" id="gate"><form class="gate-card" id="lock">
   <div class="gate-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
   <div><h1>Audit trail</h1><p class="mut">Enter the password to open the log. It is decrypted in this browser and the password never leaves it.</p></div>
-  <label>Password<input class="field" id="pw" type="password" autocomplete="current-password" required autofocus></label>
+  <label>Password<input class="field" id="pw" type="password" autocomplete="current-password" required autofocus aria-describedby="err"></label>
   <button class="btn primary" style="min-height:44px" type="submit" id="unlock">Unlock</button>
   <div class="err" id="err" role="alert"></div>
 </form></div>
 <div id="app" hidden>
+<a class="skip" href="#log">Skip to the log</a>
 <header class="top"><div class="wrap">
   <div class="brand"><h1>Audit trail</h1><span class="pill" id="project" hidden></span></div>
   <span class="pill" id="updated"><span class="live"></span><span id="updatedText">Loading</span></span>
@@ -128,9 +133,9 @@ tr.row[aria-expanded=true] .chev{transform:rotate(90deg)}
     <div class="seg" role="group" aria-label="Event" id="f-ev"></div>
     <div class="seg" role="group" aria-label="Outcome" id="f-oc"></div>
     <div class="seg" role="group" aria-label="Time range" id="f-range"></div>
-    <label class="search"><span class="sr" hidden>Search</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="field" id="q" type="search" placeholder="Search element, property, file, session  ( / )" aria-label="Search"></label>
+    <label class="search"><span class="sr" hidden>Search</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="field" id="q" type="search" enterkeyhint="search" placeholder="Search element, property, file, session  ( / )" aria-label="Search"></label>
   </section>
-  <div class="card"><table>
+  <div class="card" id="log" tabindex="-1"><table aria-label="Audit trail entries">
     <thead><tr><th>When</th><th>What</th><th>Elements</th><th class="hide">Files</th><th class="hide">Session</th></tr></thead>
     <tbody id="rows"></tbody>
   </table><div class="empty" id="empty" hidden></div></div>
@@ -186,16 +191,19 @@ function detail(r){
 }
 function row(r,tbody){
   const k=keyOf(r),isOpen=open.has(k);
-  const tr=h('tr','row'+(r.outcome==='refused'?' refused':''));tr.setAttribute('aria-expanded',String(isOpen));tr.tabIndex=0;
-  const toggle=()=>{if(open.has(k))open.delete(k);else open.add(k);render();};
-  tr.addEventListener('click',toggle);
-  tr.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===tr){e.preventDefault();toggle();}});
+  const tr=h('tr','row'+(r.outcome==='refused'?' refused':''));
+  const did='d-'+short(r.session)+'-'+Date.parse(r.at);
+  const toggle=()=>{if(open.has(k))open.delete(k);else open.add(k);render(k);};
+  tr.addEventListener('click',e=>{if(!e.target.closest('button'))toggle();});
   const t=h('td','time',new Date(r.at).toLocaleTimeString());t.title=new Date(r.at).toLocaleString();tr.appendChild(t);
-  const w=h('td');const wl=h('div','what');wl.appendChild(h('span','chev','▸'));
-  wl.appendChild(h('span','dot '+(r.outcome==='refused'?'refused':(r.event==='apply'||r.event==='undo'||r.event==='redo')?'':'info')));
-  wl.appendChild(h('span',null,VERB[r.event]||r.event));
-  if(r.outcome==='refused')wl.appendChild(h('span','badge','Refused'));
-  w.appendChild(wl);tr.appendChild(w);
+  const w=h('td');const btn=h('button','row-btn');btn.type='button';btn.setAttribute('aria-expanded',String(isOpen));btn.setAttribute('aria-controls',did);btn.dataset.key=k;
+  btn.addEventListener('click',toggle);
+  btn.appendChild(h('span','chev','▸'));
+  btn.appendChild(h('span','dot '+(r.outcome==='refused'?'refused':(r.event==='apply'||r.event==='undo'||r.event==='redo')?'':'info')));
+  btn.appendChild(h('span',null,VERB[r.event]||r.event));
+  if(r.outcome==='refused')btn.appendChild(h('span','badge','Refused'));
+  w.appendChild(btn);tr.appendChild(w);
+  tr.dataset.open=String(isOpen);
   const e=h('td');const edits=r.edits||[];
   if(edits.length){const n=edits.reduce((a,x)=>a+x.changes.length,0);e.appendChild(h('span','el mono',edits[0].element));
     e.appendChild(h('span','more',(edits.length>1?' +'+(edits.length-1)+' more':'')+' · '+n+(n===1?' property':' properties')));}
@@ -206,9 +214,9 @@ function row(r,tbody){
   tr.appendChild(fl);
   const s=h('td','hide mono',short(r.session));s.title=r.session||'';tr.appendChild(s);
   tbody.appendChild(tr);
-  if(isOpen){const d=h('tr','detail');const td=h('td');td.colSpan=5;td.appendChild(detail(r));d.appendChild(td);tbody.appendChild(d);}
+  if(isOpen){const d=h('tr','detail');d.id=did;const td=h('td');td.colSpan=5;td.appendChild(detail(r));d.appendChild(td);tbody.appendChild(d);}
 }
-function render(){
+function render(focusKey){
   const rows=data.records.filter(matches);
   const writes=rows.filter(r=>r.event==='apply'&&r.outcome==='ok').length;
   const els=new Set(rows.flatMap(r=>(r.edits||[]).map(e=>e.element))).size;
@@ -228,6 +236,7 @@ function render(){
     else{empty.appendChild(h('b',null,'No activity recorded yet'));empty.appendChild(h('span',null,'Changes applied through the editor will appear here.'));}}
   $('foot').textContent='Showing '+rows.length+' of '+data.records.length+' records'+(data.truncated?' · older records not loaded':'')+(data.skipped?' · '+data.skipped+' unreadable lines skipped':'');
   tick();
+  if(focusKey){const b=[...document.querySelectorAll('.row-btn')].find(x=>x.dataset.key===focusKey);if(b)b.focus();}
 }
 function tick(){$('updatedText').textContent=data.loadedAt?'Updated '+ago(data.loadedAt):'Loading';}
 function initFilters(){
