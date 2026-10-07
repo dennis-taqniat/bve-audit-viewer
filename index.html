@@ -1,17 +1,17 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-O5DsToA3ybOb1yzGSfO65Sk62u6E7VR7LZLD/V9fCQE='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-xkZPl6GAeNyrGw4bAzWChhot981EcTSjTUrG1zbhtoA='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :root{color-scheme:light dark;
   --bg:#fff;--fg:#18181b;--mut:#52525b;--line:#e4e4e7;--line-strong:#d4d4d8;--sunken:#f4f4f5;
-  --acc:#2563eb;--acc-fg:#fff;--bad:#b91c1c;--add:#166534;--del:#991b1b;
+  --acc:#2563eb;--acc-fg:#fff;--bad:#b91c1c;--bad-soft:#fee2e2;--add:#166534;--del:#991b1b;
   --focus:0 0 0 2px var(--bg),0 0 0 4px var(--acc);
   --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
   --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI','SF Pro Text',Roboto,sans-serif}
 @media (prefers-color-scheme:dark){:root{
   --bg:#09090b;--fg:#fafafa;--mut:#a1a1aa;--line:#27272a;--line-strong:#3f3f46;--sunken:#18181b;
-  --bad:#f87171;--add:#86efac;--del:#fca5a5}}
+  --bad:#fca5a5;--bad-soft:#450a0a;--add:#86efac;--del:#fca5a5}}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:400 15px/24px var(--sans);-webkit-font-smoothing:antialiased}
@@ -58,9 +58,10 @@ header h1{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacin
 ol{list-style:none;margin:0;padding:0}
 li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;border-top:1px solid var(--line)}
 .time{white-space:nowrap;color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px;padding-top:1px}
-.head{display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline}
+.head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between}
+.who{display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline;min-width:0}
 .head b{font-weight:600}
-.refused{color:var(--bad);font-weight:600}
+.refused{display:inline-flex;align-items:center;gap:6px;flex:none;margin-left:auto;padding:2px 10px;border-radius:999px;background:var(--bad-soft);color:var(--bad);font-size:12px;line-height:20px;font-weight:600;white-space:nowrap}
 .diffs{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;margin:6px 0 0}
 .diffs .el{grid-column:1/-1;margin-top:6px;font-weight:600}
 .diffs .el:first-child{margin-top:0}
@@ -126,9 +127,9 @@ function entry(r){
   const t=h('time','time',new Date(r.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
   t.dateTime=r.at;t.title=new Date(r.at).toLocaleString();li.appendChild(t);
   const c=h('div');const head=h('div','head');
-  head.appendChild(h('b',null,VERB[r.event]||r.event));
-  head.appendChild(h('span','mut','by '+((r.actor&&r.actor.name)||'unknown')));
-  if(r.outcome==='refused'){const x=h('span','refused');x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode(' Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
+  const who=h('div','who');who.appendChild(h('b',null,VERB[r.event]||r.event));
+  who.appendChild(h('span','mut','by '+((r.actor&&r.actor.name)||'unknown')));head.appendChild(who);
+  if(r.outcome==='refused'){const x=h('span','refused');x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode('Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
   c.appendChild(head);
   if(r.edits&&r.edits.length){const d=h('div','diffs');
     for(const e of r.edits){d.appendChild(h('div','mono el',e.element));
