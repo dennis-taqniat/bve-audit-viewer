@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/S0Kmz9RvESfd+WZhKcO7OXEt0z87ur663U79TvjP+U='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-hpD9EyLwmgELYGMwmhR3vvF7gqMIXCQajEixcJiVmOE='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :root{color-scheme:light dark;
@@ -20,6 +20,12 @@ button,input,select{font:inherit;color:inherit}
 input,select{font-size:16px}
 :focus-visible{outline:none;box-shadow:var(--focus);border-radius:6px}
 ::selection{background:color-mix(in srgb,var(--acc) 30%,transparent)}
+.ic{flex:none;vertical-align:-3px}
+.link,.btn{display:inline-flex;align-items:center;gap:6px}
+.search{position:relative;flex:1 1 220px;display:block}
+.search .ic{position:absolute;left:12px;top:14px;color:var(--mut);pointer-events:none}
+.search .field{padding-left:38px}
+.gate .ic-lg{color:var(--acc)}
 .mono{font-family:var(--mono);font-size:13px;line-height:20px}
 .mut{color:var(--mut)}
 .skip{position:absolute;left:12px;top:-48px;padding:8px 12px;background:var(--acc);color:var(--acc-fg);border-radius:6px;text-decoration:none}
@@ -43,7 +49,7 @@ main{max-width:760px;margin:0 auto;padding:32px 20px 64px}
 header{display:flex;align-items:baseline;gap:12px}
 header h1{margin:0;font-size:20px;line-height:28px;font-weight:600;flex:1 1 auto}
 .bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:20px 0 8px}
-.bar .field{flex:1 1 220px;width:auto}
+.bar select.field{flex:0 0 auto}
 .bar select{width:auto;min-width:150px}
 .count{color:var(--mut);padding:4px 0 8px;min-height:32px}
 .day{margin:32px 0 4px;font-size:13px;line-height:20px;font-weight:600;color:var(--mut)}
@@ -66,7 +72,7 @@ li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;borde
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <div class="gate" id="gate"><form id="lock">
-  <div><h1>Audit trail</h1><p class="mut">Enter the password to read the log. It stays in your browser.</p></div>
+  <div><svg class="ic ic-lg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><h1 style="margin-top:12px">Audit trail</h1><p class="mut">Enter the password to read the log. It stays in your browser.</p></div>
   <label>Password<input class="field" id="pw" type="password" autocomplete="current-password" required autofocus aria-describedby="err"></label>
   <button class="btn" type="submit" id="unlock">Unlock</button>
   <div class="err" id="err" role="alert"></div>
@@ -74,21 +80,23 @@ li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;borde
 <div id="app" hidden>
 <a class="skip" href="#log">Skip to the log</a>
 <main>
-  <header><h1>Audit trail<span class="mut" id="project" style="font-weight:400"></span></h1><button class="link" id="relock" type="button">Lock</button></header>
+  <header><h1>Audit trail<span class="mut" id="project" style="font-weight:400"></span></h1><button class="link" id="relock" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Lock</button></header>
   <div class="bar">
-    <input class="field" id="q" type="search" enterkeyhint="search" placeholder="Search element, property or file" aria-label="Search">
+    <label class="search"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><input class="field" id="q" type="search" enterkeyhint="search" placeholder="Search element, property or file" aria-label="Search"></label>
     <select class="field" id="view" aria-label="Show">
       <option value="changes">Changes</option>
       <option value="refused">Refused only</option>
       <option value="all">All activity</option>
     </select>
-    <button class="link" id="export" type="button">Export CSV</button>
+    <button class="link" id="export" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> Export CSV</button>
   </div>
   <div class="count" id="foot" role="status"></div>
   <div id="log" tabindex="-1"></div>
 </main></div>
 <script>
 const $=id=>document.getElementById(id);
+const ICON={"lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","search":"<path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/>","download":"<path d=\"M12 15V3\"/><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/>","triangle-alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","arrow-right":"<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>","file-code":"<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"/><path d=\"M14 2v5a1 1 0 0 0 1 1h5\"/><path d=\"M10 12.5 8 15l2 2.5\"/><path d=\"m14 12.5 2 2.5-2 2.5\"/>"};
+function ic(n,s){const e=document.createElement('span');e.innerHTML='<svg class="ic" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[n]+'</svg>';return e.firstChild;}
 let data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
 const f={view:'changes',q:''};
 const VERB={connect:'Connected',diff:'Reviewed diff',apply:'Applied',discard:'Discarded review',undo:'Undid',redo:'Redid'};
@@ -115,16 +123,16 @@ function entry(r){
   t.dateTime=r.at;t.title=new Date(r.at).toLocaleString();li.appendChild(t);
   const c=h('div');const head=h('div','head');
   head.appendChild(h('b',null,VERB[r.event]||r.event));
-  if(r.outcome==='refused')head.appendChild(h('span','refused','Refused'+(r.code?' · '+r.code:'')));
+  if(r.outcome==='refused'){const x=h('span','refused');x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode(' Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
   c.appendChild(head);
   if(r.edits&&r.edits.length){const d=h('div','diffs');
     for(const e of r.edits){d.appendChild(h('div','mono el',e.element));
-      for(const x of e.changes){d.appendChild(h('span','mono mut',x.prop));const v=h('span','mono');v.appendChild(val('del',x.from));v.appendChild(document.createTextNode('  →  '));v.appendChild(val('add',x.to));d.appendChild(v);}}
+      for(const x of e.changes){d.appendChild(h('span','mono mut',x.prop));const v=h('span','mono');v.appendChild(val('del',x.from));v.appendChild(document.createTextNode(' '));v.appendChild(ic('arrow-right',12));v.appendChild(document.createTextNode(' '));v.appendChild(val('add',x.to));d.appendChild(v);}}
     c.appendChild(d);}
   const meta=[];
   if(r.files&&r.files.length)meta.push(r.files.join(', '));
   if(r.session)meta.push('session '+short(r.session));
-  if(meta.length){const m=h('div','meta mono',meta.join('  ·  '));if(r.origin)m.title=r.origin;c.appendChild(m);}
+  if(meta.length){const m=h('div','meta mono');if(r.files&&r.files.length)m.appendChild(ic('file-code',13));m.appendChild(document.createTextNode(' '+meta.join('  ·  ')));if(r.origin)m.title=r.origin;c.appendChild(m);}
   li.appendChild(c);return li;
 }
 function render(){
