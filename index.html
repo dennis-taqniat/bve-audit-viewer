@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-xkZPl6GAeNyrGw4bAzWChhot981EcTSjTUrG1zbhtoA='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-5ZLvy5a6/rRlgc3fiiXdAiYxRt05vSl/jsDyZ4m0txo='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :root{color-scheme:light dark;
@@ -59,7 +59,6 @@ ol{list-style:none;margin:0;padding:0}
 li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;border-top:1px solid var(--line)}
 .time{white-space:nowrap;color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px;padding-top:1px}
 .head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between}
-.who{display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline;min-width:0}
 .head b{font-weight:600}
 .refused{display:inline-flex;align-items:center;gap:6px;flex:none;margin-left:auto;padding:2px 10px;border-radius:999px;background:var(--bad-soft);color:var(--bad);font-size:12px;line-height:20px;font-weight:600;white-space:nowrap}
 .diffs{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;margin:6px 0 0}
@@ -99,7 +98,7 @@ li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;borde
 </main></div>
 <script>
 const $=id=>document.getElementById(id);
-const ICON={"lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","search":"<path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/>","download":"<path d=\"M12 15V3\"/><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/>","triangle-alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","arrow-right":"<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>","file-code":"<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"/><path d=\"M14 2v5a1 1 0 0 0 1 1h5\"/><path d=\"M10 12.5 8 15l2 2.5\"/><path d=\"m14 12.5 2 2.5-2 2.5\"/>","chevron-down":"<path d=\"m6 9 6 6 6-6\"/>"};
+const ICON={"lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","search":"<path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/>","download":"<path d=\"M12 15V3\"/><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/>","triangle-alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","arrow-right":"<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>","file-code":"<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"/><path d=\"M14 2v5a1 1 0 0 0 1 1h5\"/><path d=\"M10 12.5 8 15l2 2.5\"/><path d=\"m14 12.5 2 2.5-2 2.5\"/>","chevron-down":"<path d=\"m6 9 6 6 6-6\"/>","user":"<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>"};
 function ic(n,s){const e=document.createElement('span');e.innerHTML='<svg class="ic" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[n]+'</svg>';return e.firstChild;}
 let data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
 const f={view:'changes',q:'',who:''};
@@ -127,20 +126,25 @@ function entry(r){
   const t=h('time','time',new Date(r.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
   t.dateTime=r.at;t.title=new Date(r.at).toLocaleString();li.appendChild(t);
   const c=h('div');const head=h('div','head');
-  const who=h('div','who');who.appendChild(h('b',null,VERB[r.event]||r.event));
-  who.appendChild(h('span','mut','by '+((r.actor&&r.actor.name)||'unknown')));head.appendChild(who);
+  head.appendChild(h('b',null,VERB[r.event]||r.event));
   if(r.outcome==='refused'){const x=h('span','refused');x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode('Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
   c.appendChild(head);
   if(r.edits&&r.edits.length){const d=h('div','diffs');
     for(const e of r.edits){d.appendChild(h('div','mono el',e.element));
       for(const x of e.changes){d.appendChild(h('span','mono mut',x.prop));const v=h('span','mono');v.appendChild(val('del',x.from));v.appendChild(document.createTextNode(' '));v.appendChild(ic('arrow-right',12));v.appendChild(document.createTextNode(' '));v.appendChild(val('add',x.to));d.appendChild(v);}}
     c.appendChild(d);}
-  const meta=[];
-  if(r.files&&r.files.length)meta.push(r.files.join(', '));
-  if(r.actor&&r.actor.email&&r.actor.email!==r.actor.name)meta.push(r.actor.email);
-  if(r.actor&&r.actor.machine)meta.push(r.actor.machine+(r.actor.ip?' ('+r.actor.ip+')':''));
-  if(r.session)meta.push('session '+short(r.session));
-  if(meta.length){const m=h('div','meta mono');if(r.files&&r.files.length)m.appendChild(ic('file-code',13));m.appendChild(document.createTextNode(' '+meta.join('  ·  ')));if(r.origin)m.title=r.origin;c.appendChild(m);}
+  const parts=[];
+  const seg=(icon,text,title)=>{const e=h('span','seg');if(icon)e.appendChild(ic(icon,13));e.appendChild(document.createTextNode((icon?' ':'')+text));if(title)e.title=title;parts.push(e);};
+  if(r.files&&r.files.length)seg('file-code',r.files.join(', '));
+  const a=r.actor;
+  seg('user',(a&&a.name)||'unknown');
+  if(a&&a.email&&a.email!==a.name)seg(null,a.email);
+  if(a&&a.machine&&a.machine!==a.name)seg(null,a.machine+(a.ip?' ('+a.ip+')':''));
+  else if(a&&a.ip)seg(null,a.ip);
+  if(r.session)seg(null,'session '+short(r.session),r.origin||'');
+  const m=h('div','meta mono');
+  parts.forEach((p,i)=>{if(i)m.appendChild(document.createTextNode('  ·  '));m.appendChild(p);});
+  c.appendChild(m);
   li.appendChild(c);return li;
 }
 function people(){
