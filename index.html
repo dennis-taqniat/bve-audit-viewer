@@ -1,17 +1,78 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-5ZLvy5a6/rRlgc3fiiXdAiYxRt05vSl/jsDyZ4m0txo='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JcYJKz6h6hS/9TbBVEReKJBJTaGKO9aKshyZ5XGbzUs='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
-:root{color-scheme:light dark;
-  --bg:#fff;--fg:#18181b;--mut:#52525b;--line:#e4e4e7;--line-strong:#d4d4d8;--sunken:#f4f4f5;
-  --acc:#2563eb;--acc-fg:#fff;--bad:#b91c1c;--bad-soft:#fee2e2;--add:#166534;--del:#991b1b;
-  --focus:0 0 0 2px var(--bg),0 0 0 4px var(--acc);
-  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
-  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI','SF Pro Text',Roboto,sans-serif}
-@media (prefers-color-scheme:dark){:root{
-  --bg:#09090b;--fg:#fafafa;--mut:#a1a1aa;--line:#27272a;--line-strong:#3f3f46;--sunken:#18181b;
-  --bad:#fca5a5;--bad-soft:#450a0a;--add:#86efac;--del:#fca5a5}}
+:host{--tdc-background:#09090b;--tdc-foreground:#fafafa;--tdc-card:#18181b;--tdc-muted:#27272a;--tdc-muted-foreground:#a1a1aa;--tdc-border:#27272a;--tdc-input:#3f3f46;--tdc-ring:#60a5fa;--tdc-primary:#2563eb;--tdc-primary-foreground:#ffffff;--tdc-primary-hover:#1d4ed8;--tdc-secondary:#27272a;--tdc-secondary-foreground:#fafafa;--tdc-accent:#27272a;--tdc-accent-foreground:#fafafa;--tdc-destructive:#dc2626;--tdc-destructive-foreground:#ffffff;--tdc-destructive-text:#f87171;--tdc-destructive-soft:#450a0a;--tdc-primary-soft:#172554;--tdc-primary-text:#93c5fd;}
+.tdc-root{--tdc-background:#ffffff;--tdc-foreground:#09090b;--tdc-card:#ffffff;--tdc-muted:#f4f4f5;--tdc-muted-foreground:#52525b;--tdc-border:#e4e4e7;--tdc-input:#d4d4d8;--tdc-ring:#2563eb;--tdc-primary:#2563eb;--tdc-primary-foreground:#ffffff;--tdc-primary-hover:#1d4ed8;--tdc-secondary:#f4f4f5;--tdc-secondary-foreground:#18181b;--tdc-accent:#f4f4f5;--tdc-accent-foreground:#18181b;--tdc-destructive:#dc2626;--tdc-destructive-foreground:#ffffff;--tdc-destructive-text:#b91c1c;--tdc-destructive-soft:#fee2e2;--tdc-primary-soft:#dbeafe;--tdc-primary-text:#1d4ed8;color-scheme:light dark;}
+@media (prefers-color-scheme:dark){.tdc-root:not([data-theme=light]){--tdc-background:#09090b;--tdc-foreground:#fafafa;--tdc-card:#18181b;--tdc-muted:#27272a;--tdc-muted-foreground:#a1a1aa;--tdc-border:#27272a;--tdc-input:#3f3f46;--tdc-ring:#60a5fa;--tdc-secondary:#27272a;--tdc-secondary-foreground:#fafafa;--tdc-accent:#27272a;--tdc-accent-foreground:#fafafa;--tdc-destructive-text:#fca5a5;--tdc-destructive-soft:#450a0a;--tdc-primary-soft:#172554;--tdc-primary-text:#93c5fd;}}
+:host,.tdc-root{--tdc-radius-md:6px;--tdc-radius-lg:8px;--tdc-radius-xl:12px;--tdc-radius-full:999px;--tdc-font-sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI','SF Pro Text',Roboto,sans-serif;--tdc-font-mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;--tdc-focus:0 0 0 2px var(--tdc-background),0 0 0 4px var(--tdc-ring);--tdc-target:44px;}
+
+/* Button */
+.tdc-btn{--h:var(--tdc-target);display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:none;height:var(--h);min-height:var(--h);padding:0 16px;border:1px solid transparent;border-radius:var(--tdc-radius-md);background:transparent;color:var(--tdc-foreground);font:500 14px/20px var(--tdc-font-sans);white-space:nowrap;cursor:pointer;user-select:none;transition:background-color .12s,border-color .12s,color .12s;}
+.tdc-btn[data-size=xs]{--h:28px;padding:0 8px;gap:4px;font-size:12px;line-height:16px;}
+.tdc-btn[data-size=sm]{--h:36px;padding:0 12px;}
+.tdc-btn[data-size=lg]{--h:48px;padding:0 24px;}
+.tdc-btn[data-size=xl]{--h:56px;padding:0 32px;font-size:16px;line-height:24px;}
+.tdc-btn[data-size^=icon]{width:var(--h);padding:0;}
+.tdc-btn[data-size=icon]{--h:var(--tdc-target);}
+.tdc-btn[data-size=icon-xs]{--h:28px;}
+.tdc-btn[data-size=icon-sm]{--h:36px;}
+.tdc-btn[data-size=icon-lg]{--h:48px;}
+.tdc-btn[data-size=icon-xl]{--h:56px;}
+.tdc-btn[data-variant=default],.tdc-btn:not([data-variant]){background:var(--tdc-primary);color:var(--tdc-primary-foreground);}
+.tdc-btn[data-variant=default]:hover:not(:disabled),.tdc-btn:not([data-variant]):hover:not(:disabled){background:var(--tdc-primary-hover);}
+.tdc-btn[data-variant=secondary]{background:var(--tdc-secondary);color:var(--tdc-secondary-foreground);}
+.tdc-btn[data-variant=secondary]:hover:not(:disabled){background:color-mix(in srgb,var(--tdc-secondary) 80%,var(--tdc-foreground));}
+.tdc-btn[data-variant=destructive]{background:var(--tdc-destructive);color:var(--tdc-destructive-foreground);}
+.tdc-btn[data-variant=destructive]:hover:not(:disabled){filter:brightness(1.1);}
+.tdc-btn[data-variant=outline]{border-color:var(--tdc-input);background:var(--tdc-background);}
+.tdc-btn[data-variant=outline]:hover:not(:disabled){background:var(--tdc-accent);color:var(--tdc-accent-foreground);}
+.tdc-btn[data-variant=ghost]{color:var(--tdc-muted-foreground);}
+.tdc-btn[data-variant=ghost]:hover:not(:disabled){background:var(--tdc-accent);color:var(--tdc-accent-foreground);}
+.tdc-btn[data-variant=link]{height:auto;min-height:var(--h);padding:0 4px;color:var(--tdc-primary-text);text-decoration:underline;text-underline-offset:3px;}
+.tdc-btn[aria-pressed=true]{background:var(--tdc-primary-soft);color:var(--tdc-primary-text);}
+.tdc-btn:focus-visible{outline:none;box-shadow:var(--tdc-focus);}
+.tdc-btn:disabled{opacity:.5;cursor:not-allowed;}
+.tdc-btn[aria-busy=true]{cursor:progress;}
+
+/* Input, textarea and select */
+.tdc-input{--h:var(--tdc-target);display:block;width:100%;height:var(--h);min-height:var(--h);padding:0 12px;border:1px solid var(--tdc-input);border-radius:var(--tdc-radius-md);background:var(--tdc-background);color:var(--tdc-foreground);font:400 14px/20px var(--tdc-font-sans);transition:border-color .12s;}
+.tdc-input[data-size=sm]{--h:36px;}
+.tdc-input[data-size=md]{--h:var(--tdc-target);}
+.tdc-input[data-size=lg]{--h:48px;}
+textarea.tdc-input{height:auto;min-height:96px;padding:10px 12px;resize:vertical;}
+.tdc-input::placeholder{color:var(--tdc-muted-foreground);}
+.tdc-input:hover:not(:disabled){border-color:var(--tdc-muted-foreground);}
+.tdc-input:focus{outline:none;border-color:var(--tdc-ring);box-shadow:var(--tdc-focus);}
+.tdc-input[aria-invalid=true]{border-color:var(--tdc-destructive);}
+.tdc-input:disabled{opacity:.5;cursor:not-allowed;}
+select.tdc-input{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;}
+@media (pointer:coarse){.tdc-input{font-size:16px;}}
+
+/* Badge */
+.tdc-badge{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 10px;border:1px solid transparent;border-radius:var(--tdc-radius-full);font:600 12px/16px var(--tdc-font-sans);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.tdc-badge[data-size=sm]{height:18px;min-width:18px;justify-content:center;padding:0 6px;}
+.tdc-badge[data-variant=default],.tdc-badge:not([data-variant]){background:var(--tdc-primary);color:var(--tdc-primary-foreground);}
+.tdc-badge[data-variant=secondary]{background:var(--tdc-secondary);color:var(--tdc-secondary-foreground);}
+.tdc-badge[data-variant=outline]{border-color:var(--tdc-input);color:var(--tdc-foreground);}
+.tdc-badge[data-variant=destructive]{background:var(--tdc-destructive-soft);color:var(--tdc-destructive-text);}
+.tdc-badge[data-variant=ghost]{color:var(--tdc-muted-foreground);}
+
+/* Tabs (line variant) */
+.tdc-tablist{position:relative;display:flex;gap:4px;padding:0 8px;border-bottom:1px solid var(--tdc-border);}
+.tdc-tab{position:relative;display:inline-flex;align-items:center;gap:6px;height:var(--tdc-target);padding:0 12px;border:0;border-radius:var(--tdc-radius-md) var(--tdc-radius-md) 0 0;background:none;color:var(--tdc-muted-foreground);font:500 14px/20px var(--tdc-font-sans);cursor:pointer;transition:color .12s;}
+.tdc-tab:hover{color:var(--tdc-foreground);}
+.tdc-tab[aria-selected=true]{color:var(--tdc-foreground);}
+.tdc-tab:focus-visible{outline:none;box-shadow:var(--tdc-focus);}
+.tdc-tab-indicator{position:absolute;left:8px;right:8px;bottom:-1px;height:2px;border-radius:2px;background:var(--tdc-ring);}
+
+/* Kbd */
+.tdc-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid var(--tdc-input);border-bottom-width:2px;border-radius:4px;background:var(--tdc-card);color:var(--tdc-muted-foreground);font:500 11px/16px var(--tdc-font-mono);}
+@media (prefers-reduced-motion:reduce){.tdc-btn,.tdc-input,.tdc-tab{transition:none;}}
+
+.tdc-root{--bg:var(--tdc-background);--fg:var(--tdc-foreground);--mut:var(--tdc-muted-foreground);--line:var(--tdc-border);--line-strong:var(--tdc-input);--sunken:var(--tdc-muted);--acc:var(--tdc-primary);--acc-fg:var(--tdc-primary-foreground);--bad:var(--tdc-destructive-text);--add:#166534;--del:#991b1b;--focus:var(--tdc-focus);--mono:var(--tdc-font-mono);--sans:var(--tdc-font-sans)}
+@media (prefers-color-scheme:dark){.tdc-root:not([data-theme=light]){--add:#86efac;--del:#fca5a5}}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:400 15px/24px var(--sans);-webkit-font-smoothing:antialiased}
@@ -21,22 +82,14 @@ input,select{font-size:16px}
 :focus-visible{outline:none;box-shadow:var(--focus);border-radius:6px}
 ::selection{background:color-mix(in srgb,var(--acc) 30%,transparent)}
 .ic{flex:none;vertical-align:-3px}
-.link,.btn{display:inline-flex;align-items:center;gap:6px}
 .search{position:relative;flex:1 1 220px;display:block}
 .search .ic{position:absolute;left:12px;top:14px;color:var(--mut);pointer-events:none}
-.search .field{padding-left:38px}
+.search .tdc-input{padding-left:38px}
 .gate .ic-lg{color:var(--acc)}
 .mono{font-family:var(--mono);font-size:13px;line-height:20px}
 .mut{color:var(--mut)}
 .skip{position:absolute;left:12px;top:-48px;padding:8px 12px;background:var(--acc);color:var(--acc-fg);border-radius:6px;text-decoration:none}
 .skip:focus{top:8px}
-.field{min-height:44px;width:100%;padding:0 12px;background:var(--bg);border:1px solid var(--line-strong);border-radius:6px}
-.field:focus{outline:none;border-color:var(--acc);box-shadow:var(--focus)}
-.btn{min-height:44px;padding:0 16px;background:var(--acc);color:var(--acc-fg);border:0;border-radius:6px;font-weight:500;cursor:pointer}
-.btn:hover{filter:brightness(1.1)}
-.btn:disabled{opacity:.6;cursor:default}
-.link{min-height:44px;padding:0 4px;background:none;border:0;color:var(--mut);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-.link:hover{color:var(--fg)}
 
 .gate{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
 .gate form{width:100%;max-width:340px;display:grid;gap:16px}
@@ -51,7 +104,7 @@ header h1{margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacin
 .sub{margin:2px 0 0;color:var(--mut);font-size:14px;line-height:20px}
 .bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:24px 0 8px}
 .sel{position:relative;flex:0 0 auto;display:block}
-.sel select{appearance:none;-webkit-appearance:none;width:auto;min-width:170px;padding-right:40px;cursor:pointer}
+.sel select{width:auto;min-width:170px}
 .sel .ic{position:absolute;right:14px;top:14px;color:var(--mut);pointer-events:none}
 .count{color:var(--mut);padding:4px 0 8px;min-height:32px}
 .day{margin:32px 0 4px;font-size:13px;line-height:20px;font-weight:600;color:var(--mut)}
@@ -60,7 +113,6 @@ li.e{display:grid;grid-template-columns:112px 1fr;gap:0 24px;padding:14px 0;bord
 .time{white-space:nowrap;color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px;padding-top:1px}
 .head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between}
 .head b{font-weight:600}
-.refused{display:inline-flex;align-items:center;gap:6px;flex:none;margin-left:auto;padding:2px 10px;border-radius:999px;background:var(--bad-soft);color:var(--bad);font-size:12px;line-height:20px;font-weight:600;white-space:nowrap}
 .diffs{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;margin:6px 0 0}
 .diffs .el{grid-column:1/-1;margin-top:6px;font-weight:600}
 .diffs .el:first-child{margin-top:0}
@@ -73,26 +125,26 @@ li.e{display:grid;grid-template-columns:112px 1fr;gap:0 24px;padding:14px 0;bord
 @media (max-width:860px){main{padding:32px 20px 56px}}
 @media (max-width:560px){main{padding:20px 16px 48px}li.e{grid-template-columns:1fr;gap:2px}.diffs{grid-template-columns:1fr;gap:0}.diffs .el{margin-top:8px}.sel{flex:1 1 100%}.sel select{width:100%}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-</style></head><body>
+</style></head><body class="tdc-root">
 <div class="gate" id="gate"><form id="lock">
   <div><svg class="ic ic-lg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><h1 style="margin-top:12px">Audit trail</h1><p class="mut">Enter the password to read the log. It stays in your browser.</p></div>
-  <label>Password<input class="field" id="pw" type="password" autocomplete="current-password" required autofocus aria-describedby="err"></label>
-  <button class="btn" type="submit" id="unlock">Unlock</button>
+  <label>Password<input class="tdc-input" id="pw" type="password" autocomplete="current-password" required autofocus aria-describedby="err"></label>
+  <button class="tdc-btn" data-variant="default" type="submit" id="unlock">Unlock</button>
   <div class="err" id="err" role="alert"></div>
 </form></div>
 <div id="app" hidden>
 <a class="skip" href="#log">Skip to the log</a>
 <main>
-  <header><div><h1>Audit trail</h1><p class="sub" id="project" hidden></p></div><button class="link" id="relock" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Lock</button></header>
+  <header><div><h1>Audit trail</h1><p class="sub" id="project" hidden></p></div><button class="tdc-btn" data-variant="ghost" id="relock" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Lock</button></header>
   <div class="bar">
-    <label class="search"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><input class="field" id="q" type="search" enterkeyhint="search" placeholder="Search element, property or file" aria-label="Search"></label>
-    <span class="sel" id="whoWrap" hidden><select class="field" id="who" aria-label="Person"></select><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
-    <span class="sel"><select class="field" id="view" aria-label="Show">
+    <label class="search"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><input class="tdc-input" id="q" type="search" enterkeyhint="search" placeholder="Search element, property or file" aria-label="Search"></label>
+    <span class="sel" id="whoWrap" hidden><select class="tdc-input" id="who" aria-label="Person"></select><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+    <span class="sel"><select class="tdc-input" id="view" aria-label="Show">
       <option value="changes">Changes</option>
       <option value="refused">Refused only</option>
       <option value="all">All activity</option>
     </select><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
-    <button class="link" id="export" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> Export CSV</button>
+    <button class="tdc-btn" data-variant="ghost" id="export" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> Export CSV</button>
   </div>
   <div class="count" id="foot" role="status"></div>
   <div id="log" tabindex="-1"></div>
@@ -128,7 +180,7 @@ function entry(r){
   t.dateTime=r.at;t.title=new Date(r.at).toLocaleString();li.appendChild(t);
   const c=h('div');const head=h('div','head');
   head.appendChild(h('b',null,VERB[r.event]||r.event));
-  if(r.outcome==='refused'){const x=h('span','refused');x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode('Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
+  if(r.outcome==='refused'){const x=h('span','tdc-badge');x.dataset.variant='destructive';x.style.cssText='margin-left:auto;gap:6px;';x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode('Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
   c.appendChild(head);
   if(r.edits&&r.edits.length){const d=h('div','diffs');
     for(const e of r.edits){d.appendChild(h('div','mono el',e.element));
