@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QSsJX65Znbc2Z/9kKXeMJCdnVbAsmWeBuEeHuAJEHNE='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-O5DsToA3ybOb1yzGSfO65Sk62u6E7VR7LZLD/V9fCQE='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :root{color-scheme:light dark;
@@ -85,6 +85,7 @@ li.e{display:grid;grid-template-columns:96px 1fr;gap:0 16px;padding:14px 0;borde
   <header><div><h1>Audit trail</h1><p class="sub" id="project" hidden></p></div><button class="link" id="relock" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Lock</button></header>
   <div class="bar">
     <label class="search"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><input class="field" id="q" type="search" enterkeyhint="search" placeholder="Search element, property or file" aria-label="Search"></label>
+    <span class="sel" id="whoWrap" hidden><select class="field" id="who" aria-label="Person"></select><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
     <span class="sel"><select class="field" id="view" aria-label="Show">
       <option value="changes">Changes</option>
       <option value="refused">Refused only</option>
@@ -100,7 +101,7 @@ const $=id=>document.getElementById(id);
 const ICON={"lock":"<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>","search":"<path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/>","download":"<path d=\"M12 15V3\"/><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/>","triangle-alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","arrow-right":"<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>","file-code":"<path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"/><path d=\"M14 2v5a1 1 0 0 0 1 1h5\"/><path d=\"M10 12.5 8 15l2 2.5\"/><path d=\"m14 12.5 2 2.5-2 2.5\"/>","chevron-down":"<path d=\"m6 9 6 6 6-6\"/>"};
 function ic(n,s){const e=document.createElement('span');e.innerHTML='<svg class="ic" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[n]+'</svg>';return e.firstChild;}
 let data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
-const f={view:'changes',q:''};
+const f={view:'changes',q:'',who:''};
 const VERB={connect:'Connected',diff:'Reviewed diff',apply:'Applied',discard:'Discarded review',undo:'Undid',redo:'Redid'};
 const CHANGES=['apply','undo','redo'];
 function h(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
@@ -116,7 +117,8 @@ function val(cls,v){const s=h('span',cls);if(colorish(v)){const w=h('i','sw');w.
 function matches(r){
   if(f.view==='changes'&&!CHANGES.includes(r.event))return false;
   if(f.view==='refused'&&r.outcome!=='refused')return false;
-  if(f.q&&!JSON.stringify([r.edits,r.files,r.session,r.code]).toLowerCase().includes(f.q.toLowerCase()))return false;
+  if(f.who&&(r.actor&&r.actor.name||'unknown')!==f.who)return false;
+  if(f.q&&!JSON.stringify([r.edits,r.files,r.session,r.code,r.actor]).toLowerCase().includes(f.q.toLowerCase()))return false;
   return true;
 }
 function entry(r){
@@ -125,6 +127,7 @@ function entry(r){
   t.dateTime=r.at;t.title=new Date(r.at).toLocaleString();li.appendChild(t);
   const c=h('div');const head=h('div','head');
   head.appendChild(h('b',null,VERB[r.event]||r.event));
+  head.appendChild(h('span','mut','by '+((r.actor&&r.actor.name)||'unknown')));
   if(r.outcome==='refused'){const x=h('span','refused');x.appendChild(ic('triangle-alert',14));x.appendChild(document.createTextNode(' Refused'+(r.code?' · '+r.code:'')));head.appendChild(x);}
   c.appendChild(head);
   if(r.edits&&r.edits.length){const d=h('div','diffs');
@@ -133,11 +136,21 @@ function entry(r){
     c.appendChild(d);}
   const meta=[];
   if(r.files&&r.files.length)meta.push(r.files.join(', '));
+  if(r.actor&&r.actor.email&&r.actor.email!==r.actor.name)meta.push(r.actor.email);
+  if(r.actor&&r.actor.machine)meta.push(r.actor.machine+(r.actor.ip?' ('+r.actor.ip+')':''));
   if(r.session)meta.push('session '+short(r.session));
   if(meta.length){const m=h('div','meta mono');if(r.files&&r.files.length)m.appendChild(ic('file-code',13));m.appendChild(document.createTextNode(' '+meta.join('  ·  ')));if(r.origin)m.title=r.origin;c.appendChild(m);}
   li.appendChild(c);return li;
 }
+function people(){
+  const names=[...new Set(data.records.map(r=>(r.actor&&r.actor.name)||'unknown'))].sort();
+  const sel=$('who');const keep=names.includes(f.who)?f.who:'';f.who=keep;
+  sel.replaceChildren();const all=h('option',null,'Everyone');all.value='';sel.appendChild(all);
+  for(const n of names){const o=h('option',null,n);o.value=n;sel.appendChild(o);}
+  sel.value=keep;$('whoWrap').hidden=names.length<2;
+}
 function render(){
+  people();
   const rows=data.records.filter(matches);
   const pj=$('project');pj.hidden=!data.project;pj.textContent=data.project||'';
   const log=$('log');log.replaceChildren();
@@ -155,9 +168,9 @@ let shown=0;
 function tick(n){if(n!==undefined)shown=n;$('foot').textContent=shown+(shown===1?' entry':' entries')+(data.truncated?' · older entries not loaded':'')+(data.skipped?' · '+data.skipped+' unreadable lines skipped':'');}
 function csvCell(v){const s=String(v===undefined?'':v);return /[",\n]/.test(s)?'"'+s.split('"').join('""')+'"':s;}
 function exportCsv(){
-  const out=[['time','event','outcome','code','element','property','from','to','files','session','origin'].join(',')];
+  const out=[['time','event','outcome','code','person','email','machine','ip','element','property','from','to','files','session','origin'].join(',')];
   for(const r of data.records.filter(matches)){
-    const base=[r.at,r.event,r.outcome,r.code||''],tail=[(r.files||[]).join(' '),r.session||'',r.origin||''];
+    const a=r.actor||{},base=[r.at,r.event,r.outcome,r.code||'',a.name||'unknown',a.email||'',a.machine||'',a.ip||''],tail=[(r.files||[]).join(' '),r.session||'',r.origin||''];
     const ch=(r.edits||[]).flatMap(e=>e.changes.map(c=>[e.element,c.prop,c.from,c.to]));
     if(!ch.length)out.push([...base,'','','','',...tail].map(csvCell).join(','));
     for(const c of ch)out.push([...base,...c,...tail].map(csvCell).join(','));}
@@ -165,6 +178,7 @@ function exportCsv(){
 }
 $('q').addEventListener('input',e=>{f.q=e.target.value;render();});
 $('view').addEventListener('change',e=>{f.view=e.target.value;render();});
+$('who').addEventListener('change',e=>{f.who=e.target.value;render();});
 $('export').addEventListener('click',exportCsv);
 addEventListener('keydown',e=>{
   const typing=['INPUT','SELECT','TEXTAREA'].includes(document.activeElement&&document.activeElement.tagName);
