@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-P+4D59QbJoVE54qyu35rArfyg+hYe6RpjW5CpKaj85Q='; style-src 'unsafe-inline'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+hN1ou8jxthCk/DKlsxw/L4MMJkoI+JLZv82sUhpBhM='; style-src 'unsafe-inline'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :host{--tdc-background:#09090b;--tdc-foreground:#fafafa;--tdc-card:#18181b;--tdc-muted:#27272a;--tdc-muted-foreground:#a1a1aa;--tdc-border:#27272a;--tdc-input:#3f3f46;--tdc-ring:#60a5fa;--tdc-primary:#2563eb;--tdc-primary-foreground:#ffffff;--tdc-primary-hover:#1d4ed8;--tdc-secondary:#27272a;--tdc-secondary-foreground:#fafafa;--tdc-accent:#27272a;--tdc-accent-foreground:#fafafa;--tdc-destructive:#dc2626;--tdc-destructive-foreground:#ffffff;--tdc-destructive-text:#f87171;--tdc-destructive-soft:#450a0a;--tdc-primary-soft:#172554;--tdc-primary-text:#93c5fd;}
@@ -290,8 +290,13 @@ function parseLines(text){
 let password='',timer=0;
 const cache=new Map();
 async function listFiles(){
+  // The relay keeps an index beside the logs, served from this origin with no rate limit.
+  const m=await fetch(DIR+'/index.json',{cache:'no-store'});
+  if(m.ok){const j=await m.json();return(j.files||[]).map(f=>({path:f.path,sha:String(f.v)}));}
+  // No index yet: fall back to the GitHub API, which allows 60 calls an hour per address.
   const r=await fetch('https://api.github.com/repos/'+REPO+'/git/trees/'+BRANCH+'?recursive=1',{headers:{Accept:'application/vnd.github+json'},cache:'no-store'});
   if(r.status===404)return[];
+  if(r.status===403||r.status===429){const t=Number(r.headers.get('x-ratelimit-reset'))*1000;throw new Error('GitHub is limiting requests'+(t?'. Try again at '+new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''));}
   if(!r.ok)throw new Error('GitHub answered '+r.status);
   return(await r.json()).tree.filter(x=>x.type==='blob'&&x.path.startsWith(DIR+'/')&&x.path.endsWith('.enc'));
 }
