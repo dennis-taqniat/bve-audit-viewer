@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+hN1ou8jxthCk/DKlsxw/L4MMJkoI+JLZv82sUhpBhM='; style-src 'unsafe-inline'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-d4uDPZuXsD5hlqpjTdnkSJGknNeCm0iq7uuz+SlhA6c='; style-src 'unsafe-inline'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :host{--tdc-background:#09090b;--tdc-foreground:#fafafa;--tdc-card:#18181b;--tdc-muted:#27272a;--tdc-muted-foreground:#a1a1aa;--tdc-border:#27272a;--tdc-input:#3f3f46;--tdc-ring:#60a5fa;--tdc-primary:#2563eb;--tdc-primary-foreground:#ffffff;--tdc-primary-hover:#1d4ed8;--tdc-secondary:#27272a;--tdc-secondary-foreground:#fafafa;--tdc-accent:#27272a;--tdc-accent-foreground:#fafafa;--tdc-destructive:#dc2626;--tdc-destructive-foreground:#ffffff;--tdc-destructive-text:#f87171;--tdc-destructive-soft:#450a0a;--tdc-primary-soft:#172554;--tdc-primary-text:#93c5fd;}
@@ -288,6 +288,9 @@ function parseLines(text){
   return{records,skipped};
 }
 let password='',timer=0;
+// A reload keeps this tab unlocked: the password is held for the life of the tab only, and Lock or a wrong password erases it.
+const KEEP='bve-audit-pw';
+const keep=v=>{try{if(v)sessionStorage.setItem(KEEP,v);else sessionStorage.removeItem(KEEP);}catch{}};
 const cache=new Map();
 async function listFiles(){
   // The relay keeps an index beside the logs, served from this origin with no rate limit.
@@ -322,7 +325,7 @@ async function refresh(first){
   data=res.data;$('gate').hidden=true;$('app').hidden=false;render();return true;
 }
 function lockUp(msg){
-  clearInterval(timer);password='';cache.clear();data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
+  clearInterval(timer);password='';keep('');cache.clear();data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
   $('app').hidden=true;$('gate').hidden=false;$('pw').value='';fail(msg||'');$('pw').focus();
 }
 $('lock').addEventListener('submit',async e=>{
@@ -333,7 +336,7 @@ $('lock').addEventListener('submit',async e=>{
   const ok=await refresh(true);
   b.disabled=false;$('ulabel').textContent='Unlock';$('spin').hidden=true;
   if(!ok)$('pw').focus();
-  if(ok){$('pw').value='';timer=setInterval(()=>refresh(false),120000);}else password='';
+  if(ok){keep(password);$('pw').value='';timer=setInterval(()=>refresh(false),120000);}else password='';
 });
 $('reveal').addEventListener('click',()=>{
   const show=$('pw').type==='password';
@@ -344,4 +347,11 @@ $('pw').addEventListener('keydown',e=>{$('caps').hidden=!(e.getModifierState&&e.
 $('pw').addEventListener('keyup',e=>{$('caps').hidden=!(e.getModifierState&&e.getModifierState('CapsLock'));});
 $('pw').addEventListener('blur',()=>{$('caps').hidden=true;});
 $('relock').addEventListener('click',()=>lockUp(''));
+(async()=>{
+  let saved='';
+  try{saved=sessionStorage.getItem(KEEP)||'';}catch{}
+  if(!saved)return;
+  password=saved;
+  if(await refresh(true))timer=setInterval(()=>refresh(false),120000);else{password='';keep('');}
+})();
 </script></body></html>
