@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JcYJKz6h6hS/9TbBVEReKJBJTaGKO9aKshyZ5XGbzUs='; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-oe6h2kYM8j2BiJV96uhlMCHw3Uo9wJBfnWRxb/iI+5M='; style-src 'unsafe-inline'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex">
 <title>BVE audit trail</title>
 <style>
 :host{--tdc-background:#09090b;--tdc-foreground:#fafafa;--tdc-card:#18181b;--tdc-muted:#27272a;--tdc-muted-foreground:#a1a1aa;--tdc-border:#27272a;--tdc-input:#3f3f46;--tdc-ring:#60a5fa;--tdc-primary:#2563eb;--tdc-primary-foreground:#ffffff;--tdc-primary-hover:#1d4ed8;--tdc-secondary:#27272a;--tdc-secondary-foreground:#fafafa;--tdc-accent:#27272a;--tdc-accent-foreground:#fafafa;--tdc-destructive:#dc2626;--tdc-destructive-foreground:#ffffff;--tdc-destructive-text:#f87171;--tdc-destructive-soft:#450a0a;--tdc-primary-soft:#172554;--tdc-primary-text:#93c5fd;}
@@ -244,51 +244,68 @@ addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.activeElement===$('q')){$('q').value='';f.q='';render();$('q').blur();}
 });
 
+const KEYS=new Map();
 async function decryptAudit(blob,password){
   const b=JSON.parse(blob);
   if(b.v!==1||b.kdf!=='PBKDF2-SHA256'||!(b.iter>=100000&&b.iter<=2000000))throw new Error('unsupported file');
   const u=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
-  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:u(b.salt),iterations:b.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  const id=password+'|'+b.salt+'|'+b.iter;
+  if(!KEYS.has(id))KEYS.set(id,(async()=>{
+    const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt:u(b.salt),iterations:b.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  })());
+  const key=await KEYS.get(id);
   return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:u(b.iv)},key,u(b.ct)));
 }
 
+const REPO="dennis-taqniat/bve-audit-viewer",BRANCH="main",DIR="logs";
 const MAX=5000;
-function parse(text){
+function parseLines(text){
   const records=[];let skipped=0;
   for(const line of text.split('\n')){if(!line.trim())continue;
     try{const r=JSON.parse(line);if(r&&typeof r.at==='string'&&typeof r.event==='string'&&typeof r.outcome==='string')records.push(r);else skipped++;}catch{skipped++;}}
-  records.reverse();
-  return{records:records.slice(0,MAX),skipped,truncated:records.length>MAX,project:records.length?records[0].project||'':'',loadedAt:Date.now()};
+  return{records,skipped};
 }
-let password='',last='',timer=0;
-async function fetchBlob(){
-  const r=await fetch('audit.enc',{cache:'no-store'});
-  if(r.status===404)return null;
-  if(!r.ok)throw new Error('HTTP '+r.status);
-  return r.text();
+let password='',timer=0;
+const cache=new Map();
+async function listFiles(){
+  const r=await fetch('https://api.github.com/repos/'+REPO+'/git/trees/'+BRANCH+'?recursive=1',{headers:{Accept:'application/vnd.github+json'},cache:'no-store'});
+  if(r.status===404)return[];
+  if(!r.ok)throw new Error('GitHub answered '+r.status);
+  return(await r.json()).tree.filter(x=>x.type==='blob'&&x.path.startsWith(DIR+'/')&&x.path.endsWith('.enc'));
+}
+async function load(){
+  const list=await listFiles();
+  if(!list.length)return{empty:true};
+  await Promise.all(list.filter(f=>!cache.has(f.sha)).map(async f=>{
+    const res=await fetch(f.path,{cache:'no-store'});
+    if(!res.ok)return;
+    try{cache.set(f.sha,parseLines(await decryptAudit(await res.text(),password)));}catch{cache.set(f.sha,null);}
+  }));
+  const good=list.map(f=>cache.get(f.sha)).filter(Boolean);
+  if(!good.length)return list.some(f=>cache.get(f.sha)===null)?{badPassword:true}:{empty:true};
+  const all=good.flatMap(g=>g.records).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));
+  return{data:{records:all.slice(0,MAX),skipped:good.reduce((n,g)=>n+g.skipped,0),truncated:all.length>MAX,project:all.length?all[0].project||'':'',loadedAt:Date.now()}};
 }
 function fail(msg){$('err').textContent=msg;}
 async function refresh(first){
-  let blob;
-  try{blob=await fetchBlob();}catch(e){if(first)fail('Could not load the log: '+e.message);return false;}
-  if(blob===null){if(first)fail('No audit log has been published yet.');return false;}
-  if(blob===last){data.loadedAt=Date.now();return true;}
-  try{data=parse(await decryptAudit(blob,password));last=blob;}
-  catch{if(first)fail('Wrong password, or the file is damaged.');else{lockUp('The log changed and no longer opens with this password.');}return false;}
-  $('gate').hidden=true;$('app').hidden=false;render();return true;
+  let res;
+  try{res=await load();}catch(e){if(first)fail('Could not load the logs: '+e.message);return false;}
+  if(res.empty){if(first)fail('No audit log has been published yet.');return false;}
+  if(res.badPassword){if(first)fail('Wrong password, or a file is damaged.');else lockUp('The logs no longer open with this password.');return false;}
+  data=res.data;$('gate').hidden=true;$('app').hidden=false;render();return true;
 }
 function lockUp(msg){
-  clearInterval(timer);password='';last='';data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
+  clearInterval(timer);password='';cache.clear();data={records:[],skipped:0,truncated:false,project:'',loadedAt:0};
   $('app').hidden=true;$('gate').hidden=false;$('pw').value='';fail(msg||'');$('pw').focus();
 }
 $('lock').addEventListener('submit',async e=>{
   e.preventDefault();
   const b=$('unlock');b.disabled=true;b.textContent='Unlocking…';fail('');
-  password=$('pw').value;
+  cache.clear();password=$('pw').value;
   const ok=await refresh(true);
   b.disabled=false;b.textContent='Unlock';
-  if(ok){$('pw').value='';timer=setInterval(()=>refresh(false),30000);}else password='';
+  if(ok){$('pw').value='';timer=setInterval(()=>refresh(false),120000);}else password='';
 });
 $('relock').addEventListener('click',()=>lockUp(''));
 </script></body></html>
