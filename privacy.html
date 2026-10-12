@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy: TDC Browser Visual Editor</title>
+<meta name="description" content="What TDC Browser Visual Editor keeps on your computer and what it sends.">
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#18181b;--mut:#52525b;--line:#e4e4e7;--acc:#1d4ed8}
+@media (prefers-color-scheme:dark){:root{--bg:#09090b;--fg:#fafafa;--mut:#a1a1aa;--line:#27272a;--acc:#60a5fa}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:680px;margin:0 auto;padding:48px 16px 80px}
+h1{font-size:28px;line-height:36px;margin:0 0 8px;letter-spacing:-0.01em}
+h2{font-size:18px;line-height:28px;margin:36px 0 8px}
+p,li{color:var(--fg)}
+.mut,.meta{color:var(--mut)}
+ul{padding-left:20px}
+a{color:var(--acc)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Privacy policy</h1>
+<p class="meta">TDC Browser Visual Editor. Effective 12 October 2026. Operator: TDC. Contact: <a href="mailto:itdhenz@gmail.com">itdhenz@gmail.com</a>.</p>
+<p>TDC Browser Visual Editor is a Chrome extension that lets you select, inspect and edit elements of a web app you run on your own computer (<code>localhost</code>) and write the changes to your project's source files after you approve them. This policy says what it keeps and what it sends.</p>
+<h2>What stays on your computer</h2>
+<ul>
+<li>The project folder you chose, and the files in it. The extension reads and writes them only through the folder you picked and only after you approve a change.</li>
+<li>Your settings and sign-in state, in the browser's extension storage.</li>
+<li>An audit log of changes in your project, in <code>.bve/audit.jsonl</code> inside the project folder.</li>
+</ul>
+<h2>What the extension sends</h2>
+<p><strong>1. Your audit log, to the operator's relay.</strong> After you apply, undo or redo a change, and when the editor opens, the extension sends the project's audit log to a server run by the operator. For each entry the log holds: the time, the kind of event and whether it succeeded, the project name, the page address (for example <code>http://localhost:5173</code>), the names of the files that changed, a label and selector of the edited element, and each changed CSS property with its old and new value. It does not contain file contents. Each upload also carries your Google account email, a random identifier for this installation, and Google's signed proof of your email.</p>
+<p>The relay checks the proof, encrypts the log with a key only the operator holds, and stores the encrypted file in a repository. The operator can decrypt and read the logs to review who changed what. The data is used only for that purpose. It is not sold, shared with other parties, or used for advertising.</p>
+<p><strong>2. Google sign-in.</strong> To tell the relay who you are, the extension signs you in with Google. Google receives the sign-in request under Google's own privacy policy. The extension asks only for your email address (the <code>openid</code> and <code>email</code> scopes) and does not read your contacts, files or any other Google data.</p>
+<p><strong>3. Ask AI (optional, off by default).</strong> If you turn it on and add your own Anthropic API key, a request you type, plus the selected element's tag, classes, text and styles, is sent to <code>api.anthropic.com</code>. Source files, file paths, page addresses and other elements are not sent. Your key is kept in the browser's extension storage and is used only for these requests.</p>
+<p>The extension has no analytics or advertising, and it does not read pages other than <code>localhost</code>, <code>127.0.0.1</code> and <code>[::1]</code>.</p>
+<h2>Retention and deletion</h2>
+<p>Audit logs stay in the relay's repository until the operator deletes them. Local logs stay in your project until you delete <code>.bve/audit.jsonl</code>. To have your uploaded logs deleted, write to the contact address above. Removing the extension deletes its stored settings and your saved folder access.</p>
+<h2>Changes</h2>
+<p>If this policy changes, the new text replaces this page and the effective date changes.</p>
+<footer>TDC &middot; <a href="privacy.html">Privacy policy</a> &middot; <a href="about.html">About</a> &middot; Contact: <a href="mailto:itdhenz@gmail.com">itdhenz@gmail.com</a></footer>
+</main>
+</body>
+</html>

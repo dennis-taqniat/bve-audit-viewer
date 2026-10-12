@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TDC Browser Visual Editor</title>
+<meta name="description" content="A Chrome extension to edit your local React app visually and write reviewed changes to your source.">
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#18181b;--mut:#52525b;--line:#e4e4e7;--acc:#1d4ed8}
+@media (prefers-color-scheme:dark){:root{--bg:#09090b;--fg:#fafafa;--mut:#a1a1aa;--line:#27272a;--acc:#60a5fa}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:680px;margin:0 auto;padding:48px 16px 80px}
+h1{font-size:28px;line-height:36px;margin:0 0 8px;letter-spacing:-0.01em}
+h2{font-size:18px;line-height:28px;margin:36px 0 8px}
+p,li{color:var(--fg)}
+.mut,.meta{color:var(--mut)}
+ul{padding-left:20px}
+a{color:var(--acc)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>TDC Browser Visual Editor</h1>
+<p class="mut">A Chrome extension from TDC for front-end developers and designers.</p>
+<p>TDC Browser Visual Editor lets you change your own React and Vite app visually, in the browser, and get each change as a small, reviewed edit to your source files.</p>
+<h2>What it does</h2>
+<ul>
+<li>Pick an element on your local page and see its styles and where it comes from in your code.</li>
+<li>Change spacing, colour, type and layout, and see the result on the page straight away.</li>
+<li>Review the exact source diff first. Nothing is written to your files until you approve it.</li>
+<li>Undo, redo and revert earlier changes. Every written change is recorded in an audit log.</li>
+</ul>
+<h2>Who it is for</h2>
+<p>Teams where designers adjust a running app and a developer owns the repository. The audit log lets a reviewer see who changed what, in which files, and what was refused.</p>
+<h2>Where it runs</h2>
+<p>Only on pages served from your own computer (<code>localhost</code>, <code>127.0.0.1</code>). It edits only the project folder you choose. You sign in with Google so changes are recorded under your account.</p>
+<h2>Privacy</h2>
+<p>Read what is stored and sent in the <a href="privacy.html">privacy policy</a>.</p>
+<footer>TDC &middot; <a href="privacy.html">Privacy policy</a> &middot; <a href="about.html">About</a> &middot; Contact: <a href="mailto:itdhenz@gmail.com">itdhenz@gmail.com</a></footer>
+</main>
+</body>
+</html>
